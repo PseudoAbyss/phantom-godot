@@ -390,3 +390,8 @@ $RECYCLE.BIN/
 *.msp
 *.lnk
 *.generated.props
+
+###################
+### Phantom specific ###
+###################
+modules/phantom_framework/
