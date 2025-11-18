@@ -385,6 +385,11 @@ public:
 	virtual void hinge_joint_set_flag(RID p_joint, PhysicsServer3D::HingeJointFlag p_flag, bool p_enabled) override;
 	virtual bool hinge_joint_get_flag(RID p_joint, PhysicsServer3D::HingeJointFlag p_flag) const override;
 
+	virtual float hinge_joint_get_applied_force(RID p_joint) const override;
+	virtual float hinge_joint_joint_get_applied_torque(RID p_joint) const override;
+
+	virtual void hinge_joint_set_target_rotation(RID p_joint, Basis basis) override;
+
 	virtual void joint_make_slider(RID p_joint, RID p_body_a, const Transform3D &p_local_ref_a, RID p_body_b, const Transform3D &p_local_ref_b) override;
 
 	virtual void slider_joint_set_param(RID p_joint, PhysicsServer3D::SliderJointParam p_param, real_t p_value) override;
@@ -395,6 +400,11 @@ public:
 	virtual void cone_twist_joint_set_param(RID p_joint, PhysicsServer3D::ConeTwistJointParam p_param, real_t p_value) override;
 	virtual real_t cone_twist_joint_get_param(RID p_joint, PhysicsServer3D::ConeTwistJointParam p_param) const override;
 
+	virtual float cone_twist_joint_get_applied_force(RID p_joint) const override;
+	virtual float cone_twist_joint_get_applied_torque(RID p_joint) const override;
+
+	virtual void cone_twist_joint_set_target_rotation(RID p_joint, Basis basis) override;
+
 	virtual void joint_make_generic_6dof(RID p_joint, RID p_body_a, const Transform3D &p_local_ref_a, RID p_body_b, const Transform3D &p_local_ref_b) override;
 
 	virtual void generic_6dof_joint_set_param(RID p_joint, Vector3::Axis p_axis, PhysicsServer3D::G6DOFJointAxisParam p_param, real_t p_value) override;
@@ -402,6 +412,11 @@ public:
 
 	virtual void generic_6dof_joint_set_flag(RID p_joint, Vector3::Axis p_axis, PhysicsServer3D::G6DOFJointAxisFlag p_flag, bool p_enable) override;
 	virtual bool generic_6dof_joint_get_flag(RID p_joint, Vector3::Axis p_axis, PhysicsServer3D::G6DOFJointAxisFlag p_flag) const override;
+
+	virtual float generic_6dof_joint_get_applied_force(RID p_joint) const override;
+	virtual float generic_6dof_joint_get_applied_torque(RID p_joint) const override;
+
+	virtual void generic_6dof_joint_set_target_rotation(RID p_joint, Basis basis) override;
 
 	virtual PhysicsServer3D::JointType joint_get_type(RID p_joint) const override;
 
@@ -494,8 +509,8 @@ public:
 	bool generic_6dof_joint_get_jolt_flag(RID p_joint, Vector3::Axis p_axis, G6DOFJointAxisFlagJolt p_flag) const;
 	void generic_6dof_joint_set_jolt_flag(RID p_joint, Vector3::Axis p_axis, G6DOFJointAxisFlagJolt p_flag, bool p_enabled);
 
-	float generic_6dof_joint_get_applied_force(RID p_joint);
-	float generic_6dof_joint_get_applied_torque(RID p_joint);
+	float generic_6dof_joint_get_applied_force(RID p_joint) const;
+	float generic_6dof_joint_get_applied_torque(RID p_joint) const;
 };
 
 VARIANT_ENUM_CAST(JoltPhysicsServer3D::HingeJointParamJolt)

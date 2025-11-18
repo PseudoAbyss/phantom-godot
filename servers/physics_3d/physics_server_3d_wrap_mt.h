@@ -366,6 +366,11 @@ public:
 	FUNC3(hinge_joint_set_flag, RID, HingeJointFlag, bool)
 	FUNC2RC(bool, hinge_joint_get_flag, RID, HingeJointFlag)
 
+	FUNC1RC(float, hinge_joint_get_applied_force, RID)
+	FUNC1RC(float, hinge_joint_get_applied_torque, RID)
+
+	FUNC2(hinge_joint_set_target_rotation, RID, Basis)
+
 	FUNC5(joint_make_slider, RID, RID, const Transform3D &, RID, const Transform3D &)
 
 	FUNC3(slider_joint_set_param, RID, SliderJointParam, real_t)
@@ -376,6 +381,11 @@ public:
 	FUNC3(cone_twist_joint_set_param, RID, ConeTwistJointParam, real_t)
 	FUNC2RC(real_t, cone_twist_joint_get_param, RID, ConeTwistJointParam)
 
+	FUNC1RC(float, cone_twist_joint_get_applied_force, RID)
+	FUNC1RC(float, cone_twist_joint_get_applied_torque, RID)
+
+	FUNC2(cone_twist_joint_set_target_rotation, RID, Basis)
+
 	FUNC5(joint_make_generic_6dof, RID, RID, const Transform3D &, RID, const Transform3D &)
 
 	FUNC4(generic_6dof_joint_set_param, RID, Vector3::Axis, G6DOFJointAxisParam, real_t)
@@ -383,6 +393,11 @@ public:
 
 	FUNC4(generic_6dof_joint_set_flag, RID, Vector3::Axis, G6DOFJointAxisFlag, bool)
 	FUNC3RC(bool, generic_6dof_joint_get_flag, RID, Vector3::Axis, G6DOFJointAxisFlag)
+
+	FUNC1RC(float, generic_6dof_joint_get_applied_force, RID)
+	FUNC1RC(float, generic_6dof_joint_get_applied_torque, RID)
+
+	FUNC2(generic_6dof_joint_set_target_rotation, RID, Basis)
 
 	FUNC1RC(JointType, joint_get_type, RID);
 

@@ -33,8 +33,9 @@
 #include "../misc/jolt_type_conversions.h"
 #include "../objects/jolt_body_3d.h"
 #include "../spaces/jolt_space_3d.h"
-
+#include "Jolt/Physics/Constraints/HingeConstraint.h"
 #include "Jolt/Physics/Constraints/SixDOFConstraint.h"
+#include "Jolt/Physics/Constraints/SwingTwistConstraint.h"
 
 namespace {
 
@@ -184,6 +185,8 @@ void JoltGeneric6DOFJoint3D::_update_spring_parameters(int p_axis) {
 }
 
 void JoltGeneric6DOFJoint3D::_update_spring_equilibrium(int p_axis) {
+	return;
+
 	JPH::SixDOFConstraint *constraint = static_cast<JPH::SixDOFConstraint *>(jolt_ref.GetPtr());
 	if (unlikely(constraint == nullptr)) {
 		return;
@@ -646,6 +649,20 @@ float JoltGeneric6DOFJoint3D::get_applied_torque() const {
 	const JPH::Vec3 total_lambda = constraint->GetTotalLambdaRotation() + constraint->GetTotalLambdaMotorRotation();
 
 	return total_lambda.Length() / last_step;
+}
+
+void JoltGeneric6DOFJoint3D::set_target_rotation(Basis p_rotation) {
+	JPH::TwoBodyConstraint *constraint = static_cast<JPH::TwoBodyConstraint *>(jolt_ref.GetPtr());
+	ERR_FAIL_NULL(constraint);
+
+	JPH::EConstraintSubType sub_type = constraint->GetSubType();
+	if (sub_type == JPH::EConstraintSubType::SixDOF) {
+		auto st_constraint = static_cast<JPH::SixDOFConstraint *>(constraint);
+		st_constraint->SetMotorState(JPH::SixDOFConstraintSettings::RotationX, JPH::EMotorState::Position);
+		st_constraint->SetMotorState(JPH::SixDOFConstraintSettings::RotationY, JPH::EMotorState::Position);
+		st_constraint->SetMotorState(JPH::SixDOFConstraintSettings::RotationZ, JPH::EMotorState::Position);
+		st_constraint->SetTargetOrientationBS(to_jolt(p_rotation));
+	}
 }
 
 void JoltGeneric6DOFJoint3D::rebuild() {

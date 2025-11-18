@@ -344,6 +344,19 @@ float JoltConeTwistJoint3D::get_applied_torque() const {
 	return total_lambda / last_step;
 }
 
+void JoltConeTwistJoint3D::set_target_rotation(Basis p_rotation) {
+	JPH::TwoBodyConstraint *constraint = static_cast<JPH::TwoBodyConstraint *>(jolt_ref.GetPtr());
+	ERR_FAIL_NULL(constraint);
+
+	JPH::EConstraintSubType sub_type = constraint->GetSubType();
+	if (sub_type == JPH::EConstraintSubType::SwingTwist) {
+		JPH::SwingTwistConstraint *st_constraint = static_cast<JPH::SwingTwistConstraint *>(constraint);
+		st_constraint->SetSwingMotorState(JPH::EMotorState::Position);
+		st_constraint->SetTwistMotorState(JPH::EMotorState::Position);
+		st_constraint->SetTargetOrientationBS(to_jolt(p_rotation));
+	}
+}
+
 void JoltConeTwistJoint3D::rebuild() {
 	destroy();
 

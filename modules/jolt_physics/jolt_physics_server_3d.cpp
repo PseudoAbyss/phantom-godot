@@ -1838,6 +1838,16 @@ float JoltPhysicsServer3D::hinge_joint_get_applied_torque(RID p_joint) {
 	return hinge_joint->get_applied_torque();
 }
 
+void JoltPhysicsServer3D::hinge_joint_set_target_rotation(RID p_joint, Basis basis) {
+	JoltJoint3D *joint = joint_owner.get_or_null(p_joint);
+	ERR_FAIL_NULL(joint);
+
+	ERR_FAIL_COND(joint->get_type() != JOINT_TYPE_HINGE);
+	JoltHingeJoint3D *hinge_joint = static_cast<JoltHingeJoint3D *>(joint);
+
+	return hinge_joint->set_target_rotation(basis);
+}
+
 double JoltPhysicsServer3D::slider_joint_get_jolt_param(RID p_joint, SliderJointParamJolt p_param) const {
 	JoltJoint3D *joint = joint_owner.get_or_null(p_joint);
 	ERR_FAIL_NULL_V(joint, 0.0);
@@ -1958,6 +1968,16 @@ float JoltPhysicsServer3D::cone_twist_joint_get_applied_torque(RID p_joint) {
 	return cone_twist_joint->get_applied_torque();
 }
 
+void JoltPhysicsServer3D::cone_twist_joint_set_target_rotation(RID p_joint, Basis basis) {
+	JoltJoint3D *joint = joint_owner.get_or_null(p_joint);
+	ERR_FAIL_NULL(joint);
+
+	ERR_FAIL_COND(joint->get_type() != JOINT_TYPE_CONE_TWIST);
+	JoltConeTwistJoint3D *cone_twist_joint = static_cast<JoltConeTwistJoint3D *>(joint);
+
+	return cone_twist_joint->set_target_rotation(basis);
+}
+
 double JoltPhysicsServer3D::generic_6dof_joint_get_jolt_param(RID p_joint, Vector3::Axis p_axis, G6DOFJointAxisParamJolt p_param) const {
 	JoltJoint3D *joint = joint_owner.get_or_null(p_joint);
 	ERR_FAIL_NULL_V(joint, 0.0);
@@ -1998,7 +2018,7 @@ void JoltPhysicsServer3D::generic_6dof_joint_set_jolt_flag(RID p_joint, Vector3:
 	return g6dof_joint->set_jolt_flag(p_axis, p_flag, p_enabled);
 }
 
-float JoltPhysicsServer3D::generic_6dof_joint_get_applied_force(RID p_joint) {
+float JoltPhysicsServer3D::generic_6dof_joint_get_applied_force(RID p_joint) const {
 	JoltJoint3D *joint = joint_owner.get_or_null(p_joint);
 	ERR_FAIL_NULL_V(joint, 0.0f);
 
@@ -2008,7 +2028,7 @@ float JoltPhysicsServer3D::generic_6dof_joint_get_applied_force(RID p_joint) {
 	return g6dof_joint->get_applied_force();
 }
 
-float JoltPhysicsServer3D::generic_6dof_joint_get_applied_torque(RID p_joint) {
+float JoltPhysicsServer3D::generic_6dof_joint_get_applied_torque(RID p_joint) const {
 	JoltJoint3D *joint = joint_owner.get_or_null(p_joint);
 	ERR_FAIL_NULL_V(joint, 0.0f);
 
@@ -2016,4 +2036,14 @@ float JoltPhysicsServer3D::generic_6dof_joint_get_applied_torque(RID p_joint) {
 	JoltGeneric6DOFJoint3D *g6dof_joint = static_cast<JoltGeneric6DOFJoint3D *>(joint);
 
 	return g6dof_joint->get_applied_torque();
+}
+
+void JoltPhysicsServer3D::generic_6dof_joint_set_target_rotation(RID p_joint, Basis basis) {
+	JoltJoint3D *joint = joint_owner.get_or_null(p_joint);
+	ERR_FAIL_NULL(joint);
+
+	ERR_FAIL_COND(joint->get_type() != JOINT_TYPE_6DOF);
+	JoltGeneric6DOFJoint3D *g6dof_joint = static_cast<JoltGeneric6DOFJoint3D *>(joint);
+
+	return g6dof_joint->set_target_rotation(basis);
 }

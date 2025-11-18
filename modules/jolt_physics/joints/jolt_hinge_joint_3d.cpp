@@ -377,6 +377,18 @@ float JoltHingeJoint3D::get_applied_torque() const {
 	}
 }
 
+void JoltHingeJoint3D::set_target_rotation(Basis p_rotation) {
+	JPH::TwoBodyConstraint *constraint = static_cast<JPH::TwoBodyConstraint *>(jolt_ref.GetPtr());
+	ERR_FAIL_NULL(constraint);
+
+	JPH::EConstraintSubType sub_type = constraint->GetSubType();
+	if (sub_type == JPH::EConstraintSubType::Hinge) {
+		JPH::HingeConstraint *h_constraint = static_cast<JPH::HingeConstraint *>(constraint);
+		h_constraint->SetMotorState(JPH::EMotorState::Position);
+		h_constraint->SetTargetOrientationBS(to_jolt(p_rotation));
+	}
+}
+
 void JoltHingeJoint3D::rebuild() {
 	destroy();
 

@@ -703,6 +703,11 @@ public:
 	virtual void hinge_joint_set_flag(RID p_joint, HingeJointFlag p_flag, bool p_enabled) = 0;
 	virtual bool hinge_joint_get_flag(RID p_joint, HingeJointFlag p_flag) const = 0;
 
+	virtual float hinge_joint_get_applied_force(RID p_joint) const = 0;
+	virtual float hinge_joint_get_applied_torque(RID p_joint) const = 0;
+
+	virtual void hinge_joint_set_target_rotation(RID p_joint, Basis basis) = 0;
+
 	enum SliderJointParam {
 		SLIDER_JOINT_LINEAR_LIMIT_UPPER,
 		SLIDER_JOINT_LINEAR_LIMIT_LOWER,
@@ -750,6 +755,11 @@ public:
 	virtual void cone_twist_joint_set_param(RID p_joint, ConeTwistJointParam p_param, real_t p_value) = 0;
 	virtual real_t cone_twist_joint_get_param(RID p_joint, ConeTwistJointParam p_param) const = 0;
 
+	virtual float cone_twist_joint_get_applied_force(RID p_joint) const = 0;
+	virtual float cone_twist_joint_get_applied_torque(RID p_joint) const = 0;
+
+	virtual void cone_twist_joint_set_target_rotation(RID p_joint, Basis basis) = 0;
+
 	enum G6DOFJointAxisParam {
 		G6DOF_JOINT_LINEAR_LOWER_LIMIT,
 		G6DOF_JOINT_LINEAR_UPPER_LIMIT,
@@ -793,6 +803,11 @@ public:
 
 	virtual void generic_6dof_joint_set_flag(RID p_joint, Vector3::Axis, G6DOFJointAxisFlag p_flag, bool p_enable) = 0;
 	virtual bool generic_6dof_joint_get_flag(RID p_joint, Vector3::Axis, G6DOFJointAxisFlag p_flag) const = 0;
+
+	virtual float generic_6dof_joint_get_applied_force(RID p_joint) const = 0;
+	virtual float generic_6dof_joint_get_applied_torque(RID p_joint) const = 0;
+
+	virtual void generic_6dof_joint_set_target_rotation(RID p_joint, Basis basis) = 0;
 
 	/* QUERY API */
 
