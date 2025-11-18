@@ -403,6 +403,11 @@ public:
 	virtual void generic_6dof_joint_set_flag(RID p_joint, Vector3::Axis p_axis, PhysicsServer3D::G6DOFJointAxisFlag p_flag, bool p_enable) override;
 	virtual bool generic_6dof_joint_get_flag(RID p_joint, Vector3::Axis p_axis, PhysicsServer3D::G6DOFJointAxisFlag p_flag) const override;
 
+	virtual void generic_6dof_joint_set_target_rotation(RID p_joint, Basis basis) override;
+
+	virtual float generic_6dof_joint_get_applied_force(RID p_joint) const override;
+	virtual float generic_6dof_joint_get_applied_torque(RID p_joint) const override;
+
 	virtual PhysicsServer3D::JointType joint_get_type(RID p_joint) const override;
 
 	virtual void joint_set_solver_priority(RID p_joint, int p_priority) override;
@@ -493,9 +498,6 @@ public:
 
 	bool generic_6dof_joint_get_jolt_flag(RID p_joint, Vector3::Axis p_axis, G6DOFJointAxisFlagJolt p_flag) const;
 	void generic_6dof_joint_set_jolt_flag(RID p_joint, Vector3::Axis p_axis, G6DOFJointAxisFlagJolt p_flag, bool p_enabled);
-
-	float generic_6dof_joint_get_applied_force(RID p_joint);
-	float generic_6dof_joint_get_applied_torque(RID p_joint);
 };
 
 VARIANT_ENUM_CAST(JoltPhysicsServer3D::HingeJointParamJolt)

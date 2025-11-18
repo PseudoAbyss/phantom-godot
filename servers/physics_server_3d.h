@@ -796,6 +796,11 @@ public:
 	virtual void generic_6dof_joint_set_flag(RID p_joint, Vector3::Axis, G6DOFJointAxisFlag p_flag, bool p_enable) = 0;
 	virtual bool generic_6dof_joint_get_flag(RID p_joint, Vector3::Axis, G6DOFJointAxisFlag p_flag) const = 0;
 
+	virtual void generic_6dof_joint_set_target_rotation(RID p_joint, Basis basis) = 0;
+
+	virtual float generic_6dof_joint_get_applied_force(RID p_joint) const = 0;
+	virtual float generic_6dof_joint_get_applied_torque(RID p_joint) const = 0;
+
 	/* QUERY API */
 
 	enum AreaBodyStatus {

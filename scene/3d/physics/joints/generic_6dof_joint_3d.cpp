@@ -49,6 +49,11 @@ void Generic6DOFJoint3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_flag_z", "flag", "value"), &Generic6DOFJoint3D::set_flag_z);
 	ClassDB::bind_method(D_METHOD("get_flag_z", "flag"), &Generic6DOFJoint3D::get_flag_z);
 
+	ClassDB::bind_method(D_METHOD("get_applied_force"), &Generic6DOFJoint3D::get_applied_force);
+	ClassDB::bind_method(D_METHOD("get_applied_torque"), &Generic6DOFJoint3D::get_applied_torque);
+
+	ClassDB::bind_method(D_METHOD("set_target_rotation", "rotation"), &Generic6DOFJoint3D::set_target_rotation);
+
 	ADD_GROUP("Linear Limit", "linear_limit_");
 
 	ADD_PROPERTYI(PropertyInfo(Variant::BOOL, "linear_limit_x/enabled"), "set_flag_x", "get_flag_x", FLAG_ENABLE_LINEAR_LIMIT);
@@ -279,6 +284,28 @@ void Generic6DOFJoint3D::set_flag_z(Flag p_flag, bool p_enabled) {
 bool Generic6DOFJoint3D::get_flag_z(Flag p_flag) const {
 	ERR_FAIL_INDEX_V(p_flag, FLAG_MAX, false);
 	return flags_z[p_flag];
+}
+
+float Generic6DOFJoint3D::get_applied_force() const {
+	if (is_configured()) {
+		return PhysicsServer3D::get_singleton()->generic_6dof_joint_get_applied_force(get_rid());
+	}
+
+	return 0.0f;
+}
+
+float Generic6DOFJoint3D::get_applied_torque() const {
+	if (is_configured()) {
+		return PhysicsServer3D::get_singleton()->generic_6dof_joint_get_applied_torque(get_rid());
+	}
+
+	return 0.0f;
+}
+
+void Generic6DOFJoint3D::set_target_rotation(Basis p_rotation) {
+	if (is_configured()) {
+		PhysicsServer3D::get_singleton()->generic_6dof_joint_set_target_rotation(get_rid(), p_rotation);
+	}
 }
 
 void Generic6DOFJoint3D::_configure_joint(RID p_joint, PhysicsBody3D *body_a, PhysicsBody3D *body_b) {
