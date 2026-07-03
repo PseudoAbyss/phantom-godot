@@ -120,5 +120,7 @@ public:
 	float get_applied_force() const;
 	float get_applied_torque() const;
 
+	void set_target_rotation(Basis p_rotation);
+
 	virtual void rebuild() override;
 };

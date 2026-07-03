@@ -33,9 +33,18 @@
 #include "jolt_globals.h"
 #include "jolt_physics_server_3d.h"
 #include "jolt_project_settings.h"
+#include "objects/jolt_physics_direct_body_state_3d.h"
+#include "phantom_extension/phantom_cone_twist_joint_3d.h"
+#include "phantom_extension/phantom_editor_plugin.h"
+#include "phantom_extension/phantom_generic_6dof_joint.h"
+#include "phantom_extension/phantom_hinge_joint_3d.h"
+#include "phantom_extension/phantom_pin_joint_3d.h"
+#include "phantom_extension/phantom_slider_joint_3d.h"
+#include "spaces/jolt_physics_direct_space_state_3d.h"
 
 #include "core/config/project_settings.h"
 #include "core/object/callable_mp.h"
+#include "core/object/class_db.h"
 #include "servers/physics_3d/physics_server_3d_wrap_mt.h"
 
 PhysicsServer3D *create_jolt_physics_server() {
@@ -45,19 +54,47 @@ PhysicsServer3D *create_jolt_physics_server() {
 	bool run_on_separate_thread = false;
 #endif
 
-	JoltPhysicsServer3D *physics_server = memnew(JoltPhysicsServer3D(run_on_separate_thread));
+	JoltPhysicsServer3D *physics_server = memnew(JoltPhysicsServer3D()); // memnew(JoltPhysicsServer3D(run_on_separate_thread));
+	physics_server->set_on_separate_thread(run_on_separate_thread);
 
 	return memnew(PhysicsServer3DWrapMT(physics_server, run_on_separate_thread));
 }
 
 void initialize_jolt_physics_module(ModuleInitializationLevel p_level) {
-	if (p_level != MODULE_INITIALIZATION_LEVEL_SERVERS) {
+	if (p_level != MODULE_INITIALIZATION_LEVEL_SERVERS && !MODULE_INITIALIZATION_LEVEL_SCENE && !MODULE_INITIALIZATION_LEVEL_EDITOR) {
 		return;
 	}
 
-	jolt_initialize();
-	PhysicsServer3DManager::get_singleton()->register_server("Jolt Physics", callable_mp_static(&create_jolt_physics_server));
-	JoltProjectSettings::register_settings();
+	switch (p_level) {
+		case MODULE_INITIALIZATION_LEVEL_CORE: {
+		} break;
+		case MODULE_INITIALIZATION_LEVEL_SERVERS: {
+			jolt_initialize();
+
+			GDREGISTER_VIRTUAL_CLASS(JoltPhysicsDirectBodyState3D);
+			GDREGISTER_VIRTUAL_CLASS(JoltPhysicsDirectSpaceState3D);
+			GDREGISTER_VIRTUAL_CLASS(JoltPhysicsServer3D);
+
+			PhysicsServer3DManager::get_singleton()->register_server("Jolt Physics", callable_mp_static(&create_jolt_physics_server));
+			JoltProjectSettings::register_settings();
+		} break;
+		case MODULE_INITIALIZATION_LEVEL_SCENE: {
+			JoltProjectSettings::register_settings();
+
+			GDREGISTER_VIRTUAL_CLASS(PhantomJoint3D)
+			GDREGISTER_CLASS(PhantomJoint3D);
+			GDREGISTER_CLASS(PhantomPinJoint3D);
+			GDREGISTER_CLASS(PhantomHingeJoint3D);
+			GDREGISTER_CLASS(PhantomSliderJoint3D);
+			GDREGISTER_CLASS(PhantomConeTwistJoint3D);
+			GDREGISTER_CLASS(PhantomGeneric6DOFJoint3D);
+		} break;
+		case MODULE_INITIALIZATION_LEVEL_EDITOR: {
+#if defined(TOOLS_ENABLED)
+			EditorPlugins::add_by_type<PhantomEditorPlugin>();
+#endif
+		} break;
+	}
 }
 
 void uninitialize_jolt_physics_module(ModuleInitializationLevel p_level) {

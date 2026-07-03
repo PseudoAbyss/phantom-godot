@@ -100,6 +100,11 @@ _FORCE_INLINE_ JPH::Quat to_jolt(const Basis &p_basis) {
 	return JPH::Quat((float)quat.x, (float)quat.y, (float)quat.z, (float)quat.w);
 }
 
+_FORCE_INLINE_ JPH::Quat to_jolt(const Quaternion &p_quat) {
+	const Quaternion quat = p_quat.normalized();
+	return JPH::Quat((float)quat.x, (float)quat.y, (float)quat.z, (float)quat.w);
+}
+
 _FORCE_INLINE_ JPH::Mat44 to_jolt(const Transform3D &p_transform) {
 	const Basis &b = p_transform.basis;
 	const Vector3 &o = p_transform.origin;

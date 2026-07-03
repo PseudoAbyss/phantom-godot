@@ -171,6 +171,7 @@ env_jolt.add_source_files(module_obj, "*.cpp")
 env_jolt.add_source_files(module_obj, "joints/*.cpp")
 env_jolt.add_source_files(module_obj, "misc/*.cpp")
 env_jolt.add_source_files(module_obj, "objects/*.cpp")
+env_jolt.add_source_files(module_obj, "phantom_extension/*.cpp")
 env_jolt.add_source_files(module_obj, "shapes/*.cpp")
 env_jolt.add_source_files(module_obj, "spaces/*.cpp")
 env.modules_sources += module_obj

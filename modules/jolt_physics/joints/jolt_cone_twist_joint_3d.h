@@ -45,6 +45,10 @@ class JoltConeTwistJoint3D final : public JoltJoint3D {
 	double swing_limit_span = 0.0;
 	double twist_limit_span = 0.0;
 
+	double swing_limit_shift_y = 0.0;
+	double swing_limit_shift_z = 0.0;
+	double twist_limit_shift = 0.0;
+
 	double swing_motor_target_speed_y = 0.0;
 	double swing_motor_target_speed_z = 0.0;
 	double twist_motor_target_speed = 0.0;
@@ -52,11 +56,25 @@ class JoltConeTwistJoint3D final : public JoltJoint3D {
 	double swing_motor_max_torque = FLT_MAX;
 	double twist_motor_max_torque = FLT_MAX;
 
+	double swing_spring_stiffness = 0.0;
+	double swing_spring_frequency = 0.0;
+	double swing_spring_damping = 0.0;
+
+	double twist_spring_stiffness = 0.0;
+	double twist_spring_frequency = 0.0;
+	double twist_spring_damping = 0.0;
+
 	bool swing_limit_enabled = true;
 	bool twist_limit_enabled = true;
 
 	bool swing_motor_enabled = false;
 	bool twist_motor_enabled = false;
+
+	bool swing_spring_enabled = false;
+	bool twist_spring_enabled = false;
+
+	bool swing_spring_use_frequency = true;
+	bool twist_spring_use_frequency = true;
 
 	JPH::Constraint *_build_swing_twist(JPH::Body *p_jolt_body_a, JPH::Body *p_jolt_body_b, const Transform3D &p_shifted_ref_a, const Transform3D &p_shifted_ref_b, float p_swing_limit_span, float p_twist_limit_span) const;
 
@@ -65,6 +83,7 @@ class JoltConeTwistJoint3D final : public JoltJoint3D {
 	void _update_motor_velocity();
 	void _update_swing_motor_limit();
 	void _update_twist_motor_limit();
+	void _update_spring_parameters();
 
 	void _limits_changed();
 	void _swing_motor_state_changed();
@@ -72,6 +91,9 @@ class JoltConeTwistJoint3D final : public JoltJoint3D {
 	void _motor_velocity_changed();
 	void _swing_motor_limit_changed();
 	void _twist_motor_limit_changed();
+	void _swing_spring_state_changed();
+	void _twist_spring_state_changed();
+	void _spring_parameters_changed();
 
 public:
 	JoltConeTwistJoint3D(const JoltJoint3D &p_old_joint, JoltBody3D *p_body_a, JoltBody3D *p_body_b, const Transform3D &p_local_ref_a, const Transform3D &p_local_ref_b);
@@ -89,6 +111,8 @@ public:
 
 	float get_applied_force() const;
 	float get_applied_torque() const;
+
+	void set_target_rotation(Basis p_rotation);
 
 	virtual void rebuild() override;
 };

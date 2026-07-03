@@ -82,6 +82,12 @@ void JoltJoint3D::_update_enabled() {
 	}
 }
 
+void JoltJoint3D::_update_solver_priority() {
+	if (jolt_ref != nullptr) {
+		jolt_ref->SetConstraintPriority((JPH::uint)solver_priority);
+	}
+}
+
 void JoltJoint3D::_update_iterations() {
 	if (jolt_ref != nullptr) {
 		jolt_ref->SetNumVelocityStepsOverride((JPH::uint)velocity_iterations);
@@ -91,6 +97,11 @@ void JoltJoint3D::_update_iterations() {
 
 void JoltJoint3D::_enabled_changed() {
 	_update_enabled();
+	_wake_up_bodies();
+}
+
+void JoltJoint3D::_solver_priority_changed() {
+	_update_solver_priority();
 	_wake_up_bodies();
 }
 
@@ -174,13 +185,17 @@ void JoltJoint3D::set_enabled(bool p_enabled) {
 }
 
 int JoltJoint3D::get_solver_priority() const {
-	return JOINT_DEFAULT_SOLVER_PRIORITY;
+	return get_jolt_ref()->GetConstraintPriority();
 }
 
 void JoltJoint3D::set_solver_priority(int p_priority) {
-	if (p_priority != JOINT_DEFAULT_SOLVER_PRIORITY) {
-		WARN_PRINT(vformat("Joint solver priority is not supported when using Jolt Physics. Any such value will be ignored. This joint connects %s.", _bodies_to_string()));
+	if (solver_priority == p_priority) {
+		return;
 	}
+
+	solver_priority = p_priority;
+
+	_solver_priority_changed();
 }
 
 void JoltJoint3D::set_solver_velocity_iterations(int p_iterations) {

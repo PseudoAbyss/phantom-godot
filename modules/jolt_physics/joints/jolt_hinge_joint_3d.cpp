@@ -111,7 +111,13 @@ void JoltHingeJoint3D::_update_motor_state() {
 	}
 
 	if (JPH::HingeConstraint *constraint = static_cast<JPH::HingeConstraint *>(jolt_ref.GetPtr())) {
-		constraint->SetMotorState(motor_enabled ? JPH::EMotorState::Velocity : JPH::EMotorState::Off);
+		if (motor_enabled) {
+			constraint->SetMotorState(JPH::EMotorState::Velocity);
+		} else if (spring_enabled) {
+			constraint->SetMotorState((JPH::EMotorState::Position));
+		} else {
+			constraint->SetMotorState(JPH::EMotorState::Off);
+		}
 	}
 }
 
@@ -138,6 +144,26 @@ void JoltHingeJoint3D::_update_motor_limit() {
 	}
 }
 
+void JoltHingeJoint3D::_update_spring_parameters() {
+	if (unlikely(_is_fixed())) {
+		return;
+	}
+
+	if (JPH::HingeConstraint *constraint = static_cast<JPH::HingeConstraint *>(jolt_ref.GetPtr())) {
+		JPH::MotorSettings &motor_settings = constraint->GetMotorSettings();
+
+		if (spring_use_frequency) {
+			motor_settings.mSpringSettings.mMode = JPH::ESpringMode::FrequencyAndDamping;
+			motor_settings.mSpringSettings.mFrequency = (float)spring_frequency;
+		} else {
+			motor_settings.mSpringSettings.mMode = JPH::ESpringMode::StiffnessAndDamping;
+			motor_settings.mSpringSettings.mStiffness = (float)spring_stiffness;
+		}
+
+		motor_settings.mSpringSettings.mDamping = (float)spring_damping;
+	}
+}
+
 void JoltHingeJoint3D::_limits_changed() {
 	rebuild();
 	_wake_up_bodies();
@@ -160,6 +186,16 @@ void JoltHingeJoint3D::_motor_speed_changed() {
 
 void JoltHingeJoint3D::_motor_limit_changed() {
 	_update_motor_limit();
+	_wake_up_bodies();
+}
+
+void JoltHingeJoint3D::_spring_state_changed() {
+	_update_motor_state();
+	_wake_up_bodies();
+}
+
+void JoltHingeJoint3D::_spring_parameters_changed() {
+	_update_spring_parameters();
 	_wake_up_bodies();
 }
 
@@ -257,6 +293,15 @@ double JoltHingeJoint3D::get_jolt_param(JoltParameter p_param) const {
 		case JoltPhysicsServer3D::HINGE_JOINT_MOTOR_MAX_TORQUE: {
 			return motor_max_torque;
 		}
+		case JoltPhysicsServer3D::HINGE_JOINT_SPRING_FREQUENCY: {
+			return spring_frequency;
+		}
+		case JoltPhysicsServer3D::HINGE_JOINT_SPRING_STIFFNESS: {
+			return spring_stiffness;
+		}
+		case JoltPhysicsServer3D::HINGE_JOINT_SPRING_DAMPING: {
+			return spring_damping;
+		}
 		default: {
 			ERR_FAIL_V_MSG(0.0, vformat("Unhandled parameter: '%d'. This should not happen. Please report this.", p_param));
 		}
@@ -276,6 +321,18 @@ void JoltHingeJoint3D::set_jolt_param(JoltParameter p_param, double p_value) {
 		case JoltPhysicsServer3D::HINGE_JOINT_MOTOR_MAX_TORQUE: {
 			motor_max_torque = p_value;
 			_motor_limit_changed();
+		} break;
+		case JoltPhysicsServer3D::HINGE_JOINT_SPRING_FREQUENCY: {
+			spring_frequency = p_value;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::HINGE_JOINT_SPRING_STIFFNESS: {
+			spring_stiffness = p_value;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::HINGE_JOINT_SPRING_DAMPING: {
+			spring_damping = p_value;
+			_spring_parameters_changed();
 		} break;
 		default: {
 			ERR_FAIL_MSG(vformat("Unhandled parameter: '%d'. This should not happen. Please report this.", p_param));
@@ -318,6 +375,12 @@ bool JoltHingeJoint3D::get_jolt_flag(JoltFlag p_flag) const {
 		case JoltPhysicsServer3D::HINGE_JOINT_FLAG_USE_LIMIT_SPRING: {
 			return limit_spring_enabled;
 		}
+		case JoltPhysicsServer3D::HINGE_JOINT_FLAG_ENABLE_SPRING: {
+			return spring_enabled;
+		}
+		case JoltPhysicsServer3D::HINGE_JOINT_FLAG_ENABLE_SPRING_FREQUENCY: {
+			return spring_use_frequency;
+		}
 		default: {
 			ERR_FAIL_V_MSG(false, vformat("Unhandled flag: '%d'. This should not happen. Please report this.", p_flag));
 		}
@@ -329,6 +392,14 @@ void JoltHingeJoint3D::set_jolt_flag(JoltFlag p_flag, bool p_enabled) {
 		case JoltPhysicsServer3D::HINGE_JOINT_FLAG_USE_LIMIT_SPRING: {
 			limit_spring_enabled = p_enabled;
 			_limit_spring_changed();
+		} break;
+		case JoltPhysicsServer3D::HINGE_JOINT_FLAG_ENABLE_SPRING: {
+			spring_enabled = p_enabled;
+			_spring_state_changed();
+		} break;
+		case JoltPhysicsServer3D::HINGE_JOINT_FLAG_ENABLE_SPRING_FREQUENCY: {
+			spring_use_frequency = p_enabled;
+			_spring_parameters_changed();
 		} break;
 		default: {
 			ERR_FAIL_MSG(vformat("Unhandled flag: '%d'. This should not happen. Please report this.", p_flag));
@@ -377,6 +448,18 @@ float JoltHingeJoint3D::get_applied_torque() const {
 	}
 }
 
+void JoltHingeJoint3D::set_target_rotation(Basis p_rotation) {
+	JPH::TwoBodyConstraint *constraint = static_cast<JPH::TwoBodyConstraint *>(jolt_ref.GetPtr());
+	ERR_FAIL_NULL(constraint);
+
+	JPH::EConstraintSubType sub_type = constraint->GetSubType();
+	if (sub_type == JPH::EConstraintSubType::Hinge) {
+		JPH::HingeConstraint *h_constraint = static_cast<JPH::HingeConstraint *>(constraint);
+		h_constraint->SetMotorState(JPH::EMotorState::Position);
+		h_constraint->SetTargetOrientationBS(to_jolt(p_rotation));
+	}
+}
+
 void JoltHingeJoint3D::rebuild() {
 	destroy();
 
@@ -417,4 +500,5 @@ void JoltHingeJoint3D::rebuild() {
 	_update_motor_state();
 	_update_motor_velocity();
 	_update_motor_limit();
+	_update_spring_parameters();
 }

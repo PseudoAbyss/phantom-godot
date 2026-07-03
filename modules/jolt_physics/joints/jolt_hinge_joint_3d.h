@@ -52,10 +52,16 @@ class JoltHingeJoint3D final : public JoltJoint3D {
 	double motor_target_speed = 0.0f;
 	double motor_max_torque = FLT_MAX;
 
+	double spring_frequency = 0.0;
+	double spring_stiffness = 0.0;
+	double spring_damping = 0.0;
+
 	bool limits_enabled = false;
 	bool limit_spring_enabled = false;
 
 	bool motor_enabled = false;
+	bool spring_enabled = false;
+	bool spring_use_frequency = true;
 
 	JPH::Constraint *_build_hinge(JPH::Body *p_jolt_body_a, JPH::Body *p_jolt_body_b, const Transform3D &p_shifted_ref_a, const Transform3D &p_shifted_ref_b, float p_limit) const;
 	JPH::Constraint *_build_fixed(JPH::Body *p_jolt_body_a, JPH::Body *p_jolt_body_b, const Transform3D &p_shifted_ref_a, const Transform3D &p_shifted_ref_b) const;
@@ -67,11 +73,16 @@ class JoltHingeJoint3D final : public JoltJoint3D {
 	void _update_motor_velocity();
 	void _update_motor_limit();
 
+	void _update_spring_parameters();
+
 	void _limits_changed();
 	void _limit_spring_changed();
 	void _motor_state_changed();
 	void _motor_speed_changed();
 	void _motor_limit_changed();
+
+	void _spring_state_changed();
+	void _spring_parameters_changed();
 
 public:
 	JoltHingeJoint3D(const JoltJoint3D &p_old_joint, JoltBody3D *p_body_a, JoltBody3D *p_body_b, const Transform3D &p_local_ref_a, const Transform3D &p_local_ref_b);
@@ -92,6 +103,8 @@ public:
 
 	float get_applied_force() const;
 	float get_applied_torque() const;
+
+	void set_target_rotation(Basis p_rotation);
 
 	virtual void rebuild() override;
 };

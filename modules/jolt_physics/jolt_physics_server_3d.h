@@ -69,10 +69,15 @@ public:
 		HINGE_JOINT_LIMIT_SPRING_FREQUENCY = 100,
 		HINGE_JOINT_LIMIT_SPRING_DAMPING,
 		HINGE_JOINT_MOTOR_MAX_TORQUE,
+		HINGE_JOINT_SPRING_FREQUENCY,
+		HINGE_JOINT_SPRING_STIFFNESS,
+		HINGE_JOINT_SPRING_DAMPING,
 	};
 
 	enum HingeJointFlagJolt {
 		HINGE_JOINT_FLAG_USE_LIMIT_SPRING = 100,
+		HINGE_JOINT_FLAG_ENABLE_SPRING,
+		HINGE_JOINT_FLAG_ENABLE_SPRING_FREQUENCY,
 	};
 
 	enum SliderJointParamJolt {
@@ -92,8 +97,17 @@ public:
 		CONE_TWIST_JOINT_SWING_MOTOR_TARGET_VELOCITY_Y = 100,
 		CONE_TWIST_JOINT_SWING_MOTOR_TARGET_VELOCITY_Z,
 		CONE_TWIST_JOINT_TWIST_MOTOR_TARGET_VELOCITY,
+		CONE_TWIST_JOINT_SWING_LIMIT_SHIFT_Y,
+		CONE_TWIST_JOINT_SWING_LIMIT_SHIFT_Z,
+		CONE_TWIST_JOINT_TWIST_LIMIT_SHIFT,
 		CONE_TWIST_JOINT_SWING_MOTOR_MAX_TORQUE,
 		CONE_TWIST_JOINT_TWIST_MOTOR_MAX_TORQUE,
+		CONE_TWIST_JOINT_SWING_SPRING_FREQUENCY,
+		CONE_TWIST_JOINT_SWING_SPRING_STIFFNESS,
+		CONE_TWIST_JOINT_SWING_SPRING_DAMPING,
+		CONE_TWIST_JOINT_TWIST_SPRING_FREQUENCY,
+		CONE_TWIST_JOINT_TWIST_SPRING_STIFFNESS,
+		CONE_TWIST_JOINT_TWIST_SPRING_DAMPING,
 	};
 
 	enum ConeTwistJointFlagJolt {
@@ -101,6 +115,10 @@ public:
 		CONE_TWIST_JOINT_FLAG_USE_TWIST_LIMIT,
 		CONE_TWIST_JOINT_FLAG_ENABLE_SWING_MOTOR,
 		CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_MOTOR,
+		CONE_TWIST_JOINT_FLAG_ENABLE_SWING_SPRING,
+		CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_SPRING,
+		CONE_TWIST_JOINT_FLAG_ENABLE_SWING_SPRING_FREQUENCY,
+		CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_SPRING_FREQUENCY
 	};
 
 	enum G6DOFJointAxisParamJolt {
@@ -119,10 +137,11 @@ public:
 	};
 
 private:
-	static void _bind_methods() {}
+	static void _bind_methods();
 
 public:
-	explicit JoltPhysicsServer3D(bool p_on_separate_thread);
+	// explicit JoltPhysicsServer3D(bool p_on_separate_thread);
+	JoltPhysicsServer3D();
 	~JoltPhysicsServer3D();
 
 	static JoltPhysicsServer3D *get_singleton() { return singleton; }
@@ -430,6 +449,7 @@ public:
 
 	virtual int get_process_info(PhysicsServer3D::ProcessInfo p_process_info) override;
 
+	void set_on_separate_thread(bool p_separate_thread) { on_separate_thread = p_separate_thread; }
 	bool is_on_separate_thread() const { return on_separate_thread; }
 	bool is_active() const { return active; }
 
@@ -472,6 +492,8 @@ public:
 	float hinge_joint_get_applied_force(RID p_joint);
 	float hinge_joint_get_applied_torque(RID p_joint);
 
+	void hinge_joint_set_target_rotation(RID p_joint, Basis basis);
+
 	double slider_joint_get_jolt_param(RID p_joint, SliderJointParamJolt p_param) const;
 	void slider_joint_set_jolt_param(RID p_joint, SliderJointParamJolt p_param, double p_value);
 
@@ -490,6 +512,8 @@ public:
 	float cone_twist_joint_get_applied_force(RID p_joint);
 	float cone_twist_joint_get_applied_torque(RID p_joint);
 
+	void cone_twist_joint_set_target_rotation(RID p_joint, Basis basis);
+
 	double generic_6dof_joint_get_jolt_param(RID p_joint, Vector3::Axis p_axis, G6DOFJointAxisParamJolt p_param) const;
 	void generic_6dof_joint_set_jolt_param(RID p_joint, Vector3::Axis p_axis, G6DOFJointAxisParamJolt p_param, double p_value);
 
@@ -498,6 +522,8 @@ public:
 
 	float generic_6dof_joint_get_applied_force(RID p_joint);
 	float generic_6dof_joint_get_applied_torque(RID p_joint);
+
+	void generic_6dof_joint_set_target_rotation(RID p_joint, Basis basis);
 };
 
 VARIANT_ENUM_CAST(JoltPhysicsServer3D::HingeJointParamJolt)

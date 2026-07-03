@@ -30,11 +30,11 @@
 
 #include "jolt_cone_twist_joint_3d.h"
 
+#include "../jolt_physics_server_3d.h"
 #include "../misc/jolt_type_conversions.h"
 #include "../objects/jolt_body_3d.h"
 #include "../spaces/jolt_space_3d.h"
-
-#include <Jolt/Physics/Constraints/SwingTwistConstraint.h>
+#include "Jolt/Physics/Constraints/SwingTwistConstraint.h"
 
 namespace {
 
@@ -78,6 +78,7 @@ JPH::Constraint *JoltConeTwistJoint3D::_build_swing_twist(JPH::Body *p_jolt_body
 	constraint_settings.mPosition2 = to_jolt_r(p_shifted_ref_b.origin);
 	constraint_settings.mTwistAxis2 = to_jolt(p_shifted_ref_b.basis.get_column(Vector3::AXIS_X));
 	constraint_settings.mPlaneAxis2 = to_jolt(p_shifted_ref_b.basis.get_column(Vector3::AXIS_Z));
+	constraint_settings.mSwingType = JPH::ESwingType::Cone;
 
 	if (p_jolt_body_a == nullptr) {
 		return constraint_settings.Create(JPH::Body::sFixedToWorld, *p_jolt_body_b);
@@ -90,13 +91,25 @@ JPH::Constraint *JoltConeTwistJoint3D::_build_swing_twist(JPH::Body *p_jolt_body
 
 void JoltConeTwistJoint3D::_update_swing_motor_state() {
 	if (JPH::SwingTwistConstraint *constraint = static_cast<JPH::SwingTwistConstraint *>(jolt_ref.GetPtr())) {
-		constraint->SetSwingMotorState(swing_motor_enabled ? JPH::EMotorState::Velocity : JPH::EMotorState::Off);
+		if (swing_motor_enabled) {
+			constraint->SetSwingMotorState(JPH::EMotorState::Velocity);
+		} else if (swing_spring_enabled) {
+			constraint->SetSwingMotorState(JPH::EMotorState::Position);
+		} else {
+			constraint->SetSwingMotorState(JPH::EMotorState::Off);
+		}
 	}
 }
 
 void JoltConeTwistJoint3D::_update_twist_motor_state() {
 	if (JPH::SwingTwistConstraint *constraint = static_cast<JPH::SwingTwistConstraint *>(jolt_ref.GetPtr())) {
-		constraint->SetTwistMotorState(twist_motor_enabled ? JPH::EMotorState::Velocity : JPH::EMotorState::Off);
+		if (twist_motor_enabled) {
+			constraint->SetTwistMotorState(JPH::EMotorState::Velocity);
+		} else if (swing_spring_enabled) {
+			constraint->SetTwistMotorState(JPH::EMotorState::Position);
+		} else {
+			constraint->SetTwistMotorState(JPH::EMotorState::Off);
+		}
 	}
 }
 
@@ -121,6 +134,33 @@ void JoltConeTwistJoint3D::_update_twist_motor_limit() {
 		motor_settings.mMinTorqueLimit = (float)-twist_motor_max_torque;
 		motor_settings.mMaxTorqueLimit = (float)twist_motor_max_torque;
 	}
+}
+
+void JoltConeTwistJoint3D::_update_spring_parameters() {
+	JPH::SwingTwistConstraint *constraint = static_cast<JPH::SwingTwistConstraint *>(jolt_ref.GetPtr());
+	if (unlikely(constraint == nullptr)) {
+		return;
+	}
+
+	JPH::MotorSettings &swing_motor_settings = constraint->GetSwingMotorSettings();
+	if (swing_spring_use_frequency) {
+		swing_motor_settings.mSpringSettings.mMode = JPH::ESpringMode::FrequencyAndDamping;
+		swing_motor_settings.mSpringSettings.mFrequency = swing_spring_frequency;
+	} else {
+		swing_motor_settings.mSpringSettings.mMode = JPH::ESpringMode::StiffnessAndDamping;
+		swing_motor_settings.mSpringSettings.mStiffness = swing_spring_stiffness;
+	}
+	swing_motor_settings.mSpringSettings.mDamping = swing_spring_damping;
+
+	JPH::MotorSettings &twist_motor_settings = constraint->GetTwistMotorSettings();
+	if (twist_spring_use_frequency) {
+		twist_motor_settings.mSpringSettings.mMode = JPH::ESpringMode::FrequencyAndDamping;
+		twist_motor_settings.mSpringSettings.mFrequency = twist_spring_frequency;
+	} else {
+		twist_motor_settings.mSpringSettings.mMode = JPH::ESpringMode::StiffnessAndDamping;
+		twist_motor_settings.mSpringSettings.mStiffness = twist_spring_stiffness;
+	}
+	twist_motor_settings.mSpringSettings.mDamping = twist_spring_damping;
 }
 
 void JoltConeTwistJoint3D::_limits_changed() {
@@ -150,6 +190,21 @@ void JoltConeTwistJoint3D::_swing_motor_limit_changed() {
 
 void JoltConeTwistJoint3D::_twist_motor_limit_changed() {
 	_update_twist_motor_limit();
+	_wake_up_bodies();
+}
+
+void JoltConeTwistJoint3D::_swing_spring_state_changed() {
+	_update_swing_motor_state();
+	_wake_up_bodies();
+}
+
+void JoltConeTwistJoint3D::_twist_spring_state_changed() {
+	_update_twist_motor_state();
+	_wake_up_bodies();
+}
+
+void JoltConeTwistJoint3D::_spring_parameters_changed() {
+	_update_spring_parameters();
 	_wake_up_bodies();
 }
 
@@ -214,6 +269,15 @@ void JoltConeTwistJoint3D::set_param(PhysicsServer3D::ConeTwistJointParam p_para
 
 double JoltConeTwistJoint3D::get_jolt_param(JoltParameter p_param) const {
 	switch (p_param) {
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_LIMIT_SHIFT_Y: {
+			return swing_limit_shift_y;
+		}
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_LIMIT_SHIFT_Z: {
+			return swing_limit_shift_z;
+		}
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_LIMIT_SHIFT: {
+			return twist_limit_shift;
+		}
 		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_MOTOR_TARGET_VELOCITY_Y: {
 			return swing_motor_target_speed_y;
 		}
@@ -229,6 +293,18 @@ double JoltConeTwistJoint3D::get_jolt_param(JoltParameter p_param) const {
 		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_MOTOR_MAX_TORQUE: {
 			return twist_motor_max_torque;
 		}
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_SPRING_FREQUENCY: {
+			return swing_spring_frequency;
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_SPRING_DAMPING: {
+			return swing_spring_damping;
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_SPRING_FREQUENCY: {
+			return twist_spring_frequency;
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_SPRING_DAMPING: {
+			return twist_spring_damping;
+		} break;
 		default: {
 			ERR_FAIL_V_MSG(0.0, vformat("Unhandled parameter: '%d'. This should not happen. Please report this.", p_param));
 		}
@@ -237,6 +313,18 @@ double JoltConeTwistJoint3D::get_jolt_param(JoltParameter p_param) const {
 
 void JoltConeTwistJoint3D::set_jolt_param(JoltParameter p_param, double p_value) {
 	switch (p_param) {
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_LIMIT_SHIFT_Y: {
+			swing_limit_shift_y = p_value;
+			_limits_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_LIMIT_SHIFT_Z: {
+			swing_limit_shift_z = p_value;
+			_limits_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_LIMIT_SHIFT: {
+			twist_limit_shift = p_value;
+			_limits_changed();
+		} break;
 		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_MOTOR_TARGET_VELOCITY_Y: {
 			swing_motor_target_speed_y = p_value;
 			_motor_velocity_changed();
@@ -257,6 +345,30 @@ void JoltConeTwistJoint3D::set_jolt_param(JoltParameter p_param, double p_value)
 			twist_motor_max_torque = p_value;
 			_twist_motor_limit_changed();
 		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_SPRING_FREQUENCY: {
+			swing_spring_frequency = p_value;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_SPRING_STIFFNESS: {
+			swing_spring_stiffness = p_value;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_SWING_SPRING_DAMPING: {
+			swing_spring_damping = p_value;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_SPRING_FREQUENCY: {
+			twist_spring_frequency = p_value;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_SPRING_STIFFNESS: {
+			twist_spring_stiffness = p_value;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_TWIST_SPRING_DAMPING: {
+			twist_spring_damping = p_value;
+			_spring_parameters_changed();
+		} break;
 		default: {
 			ERR_FAIL_MSG(vformat("Unhandled parameter: '%d'. This should not happen. Please report this.", p_param));
 		} break;
@@ -276,6 +388,18 @@ bool JoltConeTwistJoint3D::get_jolt_flag(JoltFlag p_flag) const {
 		}
 		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_MOTOR: {
 			return twist_motor_enabled;
+		}
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_SWING_SPRING: {
+			return swing_spring_enabled;
+		}
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_SPRING: {
+			return twist_spring_enabled;
+		}
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_SWING_SPRING_FREQUENCY: {
+			return swing_spring_use_frequency;
+		}
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_SPRING_FREQUENCY: {
+			return twist_spring_use_frequency;
 		}
 		default: {
 			ERR_FAIL_V_MSG(false, vformat("Unhandled flag: '%d'. This should not happen. Please report this.", p_flag));
@@ -300,6 +424,22 @@ void JoltConeTwistJoint3D::set_jolt_flag(JoltFlag p_flag, bool p_enabled) {
 		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_MOTOR: {
 			twist_motor_enabled = p_enabled;
 			_twist_motor_state_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_SWING_SPRING: {
+			swing_spring_enabled = p_enabled;
+			_swing_spring_state_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_SPRING: {
+			twist_spring_enabled = p_enabled;
+			_twist_spring_state_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_SWING_SPRING_FREQUENCY: {
+			swing_spring_use_frequency = p_enabled;
+			_spring_parameters_changed();
+		} break;
+		case JoltPhysicsServer3D::CONE_TWIST_JOINT_FLAG_ENABLE_TWIST_SPRING_FREQUENCY: {
+			twist_spring_use_frequency = p_enabled;
+			_spring_parameters_changed();
 		} break;
 		default: {
 			ERR_FAIL_MSG(vformat("Unhandled flag: '%d'. This should not happen. Please report this.", p_flag));
@@ -343,6 +483,19 @@ float JoltConeTwistJoint3D::get_applied_torque() const {
 	return total_lambda / last_step;
 }
 
+void JoltConeTwistJoint3D::set_target_rotation(Basis p_rotation) {
+	JPH::TwoBodyConstraint *constraint = static_cast<JPH::TwoBodyConstraint *>(jolt_ref.GetPtr());
+	ERR_FAIL_NULL(constraint);
+
+	JPH::EConstraintSubType sub_type = constraint->GetSubType();
+	if (sub_type == JPH::EConstraintSubType::SwingTwist) {
+		JPH::SwingTwistConstraint *st_constraint = static_cast<JPH::SwingTwistConstraint *>(constraint);
+		st_constraint->SetSwingMotorState(JPH::EMotorState::Position);
+		st_constraint->SetTwistMotorState(JPH::EMotorState::Position);
+		st_constraint->SetTargetOrientationBS(to_jolt(p_rotation));
+	}
+}
+
 void JoltConeTwistJoint3D::rebuild() {
 	destroy();
 
@@ -358,7 +511,7 @@ void JoltConeTwistJoint3D::rebuild() {
 	Transform3D shifted_ref_a;
 	Transform3D shifted_ref_b;
 
-	_shift_reference_frames(Vector3(), Vector3(), shifted_ref_a, shifted_ref_b);
+	_shift_reference_frames(Vector3(), Vector3(twist_limit_shift, swing_limit_shift_y, swing_limit_shift_z), shifted_ref_a, shifted_ref_b);
 
 	jolt_ref = _build_swing_twist(jolt_body_a, jolt_body_b, shifted_ref_a, shifted_ref_b, (float)swing_limit_span, (float)twist_limit_span);
 
@@ -369,6 +522,7 @@ void JoltConeTwistJoint3D::rebuild() {
 	_update_swing_motor_state();
 	_update_twist_motor_state();
 	_update_motor_velocity();
+	_update_spring_parameters();
 	_update_swing_motor_limit();
 	_update_twist_motor_limit();
 }

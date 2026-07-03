@@ -44,6 +44,8 @@ protected:
 	bool enabled = true;
 	bool collision_disabled = false;
 
+	int solver_priority = 1;
+
 	int velocity_iterations = 0;
 	int position_iterations = 0;
 
@@ -62,9 +64,11 @@ protected:
 	void _wake_up_bodies();
 
 	void _update_enabled();
+	void _update_solver_priority();
 	void _update_iterations();
 
 	void _enabled_changed();
+	void _solver_priority_changed();
 	void _iterations_changed();
 
 	String _bodies_to_string() const;
